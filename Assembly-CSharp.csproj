@@ -57,9 +57,14 @@
     <Compile Include="Assets/Scripts/BattleManager.cs" />
     <Compile Include="Assets/DataBase/AttackImages.cs" />
     <Compile Include="Assets/Scripts/AutoManager.cs" />
+    <Compile Include="Assets/Scripts/Mass3.cs" />
     <Compile Include="Assets/Scripts/GameManager2.cs" />
     <Compile Include="Assets/Scripts/Mass2.cs" />
+    <Compile Include="Assets/Thoth/Cartoon UI Pack/Scripts/StatsExample.cs" />
     <Compile Include="Assets/Scripts/GameManager.cs" />
+    <Compile Include="Assets/Test.cs" />
+    <Compile Include="Assets/Thoth/Cartoon UI Pack/Scripts/MyCursor.cs" />
+    <Compile Include="Assets/Beautiful Progress Bar Free - CYKO/Scripts/SliderScripts.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

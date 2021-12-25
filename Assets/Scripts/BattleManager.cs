@@ -9,12 +9,15 @@ public class BattleManager : MonoBehaviour
     //マスのサイズ
     int EDGE = 4;
 
-    //敵のオブジェクト
-    public GameObject Monster;
+    //PlayerとEnemyのクラス
+    public Test Player;
+    public Test Enemy;
 
-    //敵のHP
-    public int HP = 6000;
-    public Slider HPSlider;
+    //PlayerとEnemyのHP
+    public int PlayerHP = 6000;
+    public Slider PlayerHPSlider;
+    public int EnemyHP = 6000;
+    public Slider EnemyHPSlider;
 
     //マスの処理に必要な要素を定義
     public int[,] MassNum = new int[4, 4];
@@ -36,7 +39,7 @@ public class BattleManager : MonoBehaviour
 
     //リソース開放のための要素
     int resouceCounter = 0;
-    int ReleaseSpan = 100;
+    int ReleaseSpan = 1000;
 
     //ゲームクリア状態の判定
     public int GameState = 0;//0:ゲーム中、1:ゲームクリア、2:ゲームオーバー
@@ -53,6 +56,9 @@ public class BattleManager : MonoBehaviour
     public List<string> ActionStuck = new List<string>();
     [SerializeField] int MaxStuckNum = 5;
 
+    //敵の行動ターンのカウンター
+    int enemyTurnCounter = 0;
+    [SerializeField] int EnemyTurnSpan = 100;
 
     //ディスプレイ用
     public Text GameClearText;
@@ -64,6 +70,9 @@ public class BattleManager : MonoBehaviour
 
         //ランダム関数の初期化
         Random.InitState(System.DateTime.Now.Millisecond);
+
+        Player = GameObject.FindWithTag("Player").GetComponent<Test>();
+        Enemy = GameObject.FindWithTag("Enemy").GetComponent<Test>();
 
         //盤面などの初期設定
         InitIsMergedFlag();
@@ -88,6 +97,9 @@ public class BattleManager : MonoBehaviour
 
         //入力に従って移動アクションを実行
         MoveAction();
+
+        //敵のターンを処理する関数
+        EnemyTurn();
     }
 
     //フリックされたかの判定
@@ -164,6 +176,9 @@ public class BattleManager : MonoBehaviour
         //行動スタックに何もなければ何もしない
         if (ActionStuck.Count == 0) return;
 
+        //ゲームステータスが0以外なら何もしない
+        if (GameState != 0) return;
+
         //行動フラグをONに切り替え
         isActioned = true;
 
@@ -230,7 +245,7 @@ public class BattleManager : MonoBehaviour
         //移動中もしくは誕生中のブロックがいる場合は何もしない
         foreach(Transform n in Blocks.transform)
         {
-            var myMass = n.GetComponent<Mass2>();
+            var myMass = n.GetComponent<Mass3>();
             if (myMass.isMoving || myMass.isBirthing) return;
         }
 
@@ -260,32 +275,32 @@ public class BattleManager : MonoBehaviour
                 switch (i)
                 {
                     case 0:
-                        MassPos[i, j].y = 0.3f;
+                        MassPos[i, j].y = 40;
                         break;
                     case 1:
-                        MassPos[i, j].y = -0.8f;
+                        MassPos[i, j].y = -107;
                         break;
                     case 2:
-                        MassPos[i, j].y = -1.9f;
+                        MassPos[i, j].y = -253;
                         break;
                     case 3:
-                        MassPos[i, j].y = -3f;
+                        MassPos[i, j].y = -400;
                         break;
                 }
 
                 switch (j)
                 {
                     case 0:
-                        MassPos[i, j].x = -1.65f;
+                        MassPos[i, j].x = -220;
                         break;
                     case 1:
-                        MassPos[i, j].x = -0.55f;
+                        MassPos[i, j].x = -73;
                         break;
                     case 2:
-                        MassPos[i, j].x = 0.55f;
+                        MassPos[i, j].x = 73;
                         break;
                     case 3:
-                        MassPos[i, j].x = 1.65f;
+                        MassPos[i, j].x = 220;
                         break;
                 }
             }
@@ -352,15 +367,17 @@ public class BattleManager : MonoBehaviour
         foreach(Transform n in Blocks.transform)
         {
             n.gameObject.SetActive(false);
-            n.GetComponent<Mass2>().isDisplayed = false;
+            n.GetComponent<Mass3>().isDisplayed = false;
         }
     }
 
     //HPスライダーを初期化する関数
     void InitHPSlider()
     {
-        HPSlider.maxValue = HP;
-        HPSlider.value = HP;
+        PlayerHPSlider.maxValue = PlayerHP;
+        PlayerHPSlider.value = PlayerHP;
+        EnemyHPSlider.maxValue = EnemyHP;
+        EnemyHPSlider.value = EnemyHP;
     }
 
     //ブロックを生成してゲームをスタートする関数
@@ -621,7 +638,7 @@ public class BattleManager : MonoBehaviour
         //いま存在しているブロックに対して処理を実行
         foreach (Transform n in Blocks.transform)
         {
-            var thisMass = n.GetComponent<Mass2>();
+            var thisMass = n.GetComponent<Mass3>();
 
             if (thisMass.isDisplayed)
             {
@@ -692,14 +709,31 @@ public class BattleManager : MonoBehaviour
     //HPにダメージを付与する関数
     void DamageAttack(int num)
     {
-        HP -= num;
-        HPSlider.value = HP;
-
-        if (HP <= 0)
+        //64以下の攻撃を小攻撃としてモーション
+        if (num <= 64)
         {
-            Monster.SetActive(false);
-            GameClearText.text = "GameClear!";
-            GameClearText.gameObject.SetActive(true);
+            Player.Attack();
+            Enemy.Damage_s();
+        }
+        //64より大きい攻撃を大攻撃としてモーション
+        else
+        {
+            Player.StrongAttack();
+            Enemy.Damage_l();
+        }
+
+        //num数分だけEnemyにダメージを付与
+        EnemyHP -= num;
+        EnemyHPSlider.value = EnemyHP;
+
+        //HPが0以下の場合は死亡処理
+        if (EnemyHP <= 0)
+        {
+            //ゲームステータスを変更
+            GameState = 3;
+
+            //ゲームクリア処理
+            GameClear();
         }
     }
 
@@ -741,20 +775,20 @@ public class BattleManager : MonoBehaviour
         GameObject thisBlock = null;
         foreach(Transform n in Blocks.transform)
         {
-            if (!n.GetComponent<Mass2>().isDisplayed)
+            if (!n.GetComponent<Mass3>().isDisplayed)
             {
                 thisBlock = n.gameObject;
-                n.GetComponent<Mass2>().isDisplayed = true;
+                n.GetComponent<Mass3>().isDisplayed = true;
                 break;
             }
         }
 
         //ブロックを指定位置に表示
         thisBlock.SetActive(true);
-        thisBlock.transform.position = MassPos[x, y];
+        thisBlock.transform.localPosition = MassPos[x, y];
 
         //それぞれの要素を更新して表示
-        var myMass = thisBlock.GetComponent<Mass2>();
+        var myMass = thisBlock.GetComponent<Mass3>();
         myMass.myNum = MassNum[x, y];
         myMass.myMergeNum = constMergeNum[x, y];
         myMass.TextUpdate();
@@ -813,11 +847,84 @@ public class BattleManager : MonoBehaviour
         // ゲームオーバー
         else if (GameState == 2)
         {
-            GameClearText.text = "GameOver";
-            GameClearText.gameObject.SetActive(true);
-
-            GameClearText.transform.localPosition = new Vector2(0, -175);
+            //ゲームオーバー処理
+            GameOver();
         }
+    }
+
+    //敵の攻撃を処理する関数
+    void EnemyTurn()
+    {
+        //ゲームステータスが0以外なら何もしない
+        if (GameState != 0) return;
+
+        //カウンターに加算
+        enemyTurnCounter += 1;
+
+        //カウンターが目標値に達していなければ何もしない
+        if (enemyTurnCounter < EnemyTurnSpan) return;
+
+        //ここからエネミーの行動
+
+        //カウンターを0に戻す
+        enemyTurnCounter = 0;
+
+        //ダメージ値を設定
+        int Damage = 50;
+
+        //小攻撃・大攻撃をランダムに決定
+        float r = Random.value;
+        if (r < 0.5f)
+        {
+            Enemy.Attack();
+            Player.Damage_s();
+        }
+        else
+        {
+            Damage = 100;
+            Enemy.StrongAttack();
+            Player.Damage_l();
+        }
+
+        //Playerにダメージを付与
+        PlayerHP -= Damage;
+        PlayerHPSlider.value = PlayerHP;
+
+        //HPが0以下の場合はゲームオーバー処理
+        if (PlayerHP <= 0)
+        {
+            //ゲームステータスを変更
+            GameState = 4;
+
+            //ゲームオーバー処理
+            GameOver();
+        }
+    }
+
+    //ゲームクリアを処理する関数
+    void GameClear()
+    {
+        //勝利、死亡モーションをそれぞれ実行
+        Player.HangOn();
+        Enemy.Dead();
+
+        //ゲームクリア表示
+        GameClearText.text = "GameClear!";
+        GameClearText.transform.localPosition = new Vector2(0, -175);
+        GameClearText.gameObject.SetActive(true);
+    }
+
+    //ゲームオーバーを処理する関数
+    void GameOver()
+    {
+        //勝利、死亡モーションをそれぞれ実行
+        Enemy.HangOn();
+        Player.Dead();
+
+        //ゲームオーバーUIを表示
+        GameClearText.text = "GameOver";
+        GameClearText.transform.localPosition = new Vector2(0, -175);
+        GameClearText.gameObject.SetActive(true);
     }
 
     public void RestartScene()

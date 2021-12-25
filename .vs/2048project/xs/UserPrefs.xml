@@ -1,8 +1,10 @@
-﻿<Properties>
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/BattleManager.cs">
+﻿<Properties StartupConfiguration="{6F434F05-5572-8053-34F6-B4366B551C3E}|">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Test.cs">
     <Files>
-      <File FileName="Assets/Scripts/BattleManager.cs" Line="17" Column="15" />
-      <File FileName="Assets/AutoManager.cs" Line="36" Column="19" />
+      <File FileName="Assets/Scripts/BattleManager.cs" Line="558" Column="18" />
+      <File FileName="Assets/AutoManager.cs" Line="12" Column="34" />
+      <File FileName="Assets/Mass3.cs" Line="102" Column="31" />
+      <File FileName="Assets/Test.cs" Line="7" Column="27" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.PinnedWatches />
